@@ -11,6 +11,7 @@ class EdgeConv(MessagePassing):
     # in_channels = features
     def __init__(self, in_channels, out_channels):
         super().__init__(aggr='max') #  "Max" aggregation.
+        
         # building multi-layer perceptron
         self.mlp = Seq(Linear(2 * in_channels, out_channels),
                        ReLU(),

@@ -3,6 +3,11 @@ import numpy as np
 import copy
 
 if __name__ == "__main__":
+    
+    with open('attributi.txt', 'r') as file:
+        content = file.read()
+    
+    labels = content.split('\n')
 
     with open('training.g', 'r') as f:
         contents = f.read()
@@ -22,7 +27,7 @@ if __name__ == "__main__":
     edges_tensor = [] #Array di tensori. Ogni tensore corrisponde a un sottografo; quest'ultimo è caratterizzato dagli archi che
                       #lo compongono, ovvero dai nodi di partenza e di arrivo.
 
-    ground_truth_tensor = []
+    ground_truth_tensor = [] # contiene i one-hot encoded vector per ogni grafo
 
     for i in range(0, len(graphs)):
         graphs[i] = graphs[i][3:] #graphs[i] = grafo i-esimo
@@ -98,12 +103,28 @@ if __name__ == "__main__":
             # grafo -> sottografo -> archi del sottografo -> valori arco
             subgraph_edges.append(tmp_edges) 
 
-    
-    for graph in subgraph_nodes:
-        for subgraph in graph:
-            subgraph_feature = []
-            for node in subgraph:
+    #Creazione del tensore finale a partire dalla lista dei sottografi
+    for index, graph in enumerate(subgraph_nodes):
+        for  subgraph in graph:
+            subgraph_ground_truth = np.zeros(len(labels)) # quello che sarà vettore di ground truth
+            subgraph_feature = [] #quello che sarà il tensore dei nodi
+            
+            for index2,node in enumerate(subgraph):
                 subgraph_feature.append([float(node[2]), float(node[3]), float(node[4])])
+                
+                #DA CONTROLLARE se è ok il fatto che possono esserci nodi ripetuti
+                if index2 == len(subgraph)-1:
+                    last_subgraph_node_index = nodes[index].index(node)
+                    node_to_predict = nodes[index][last_subgraph_node_index + 1]
+                    label_to_predict = node_to_predict[1]
+                    index_to_predict = labels.index(label_to_predict)
+                    subgraph_ground_truth[index_to_predict] = 1
+        
+            #Contiene tutti gli one-hot encoded vectors
+            ground_truth_tensor.append(torch.tensor(subgraph_ground_truth))
+            nodes_tensor.append(torch.tensor(subgraph_feature))
+
+    
 
     for graph in subgraph_edges:
         for subgraph in graph:
@@ -111,16 +132,28 @@ if __name__ == "__main__":
             start_nodes = []
             end_nodes = []
             for edge in subgraph:
-                start_nodes.append(float(edge[0]))
-                end_nodes.append(float(edge[1]))
+                #-1 perchè l'arco deve far riferimento al nodo e 
+                # in questo caso il numero del nodo è la posizione nell'array 
+                # che quindi inizia da 0 e non da 1
+                start_nodes.append(float(edge[0]) -1) 
+                end_nodes.append(float(edge[1]) -1)
             subgraph_e.append([start_nodes, end_nodes])
 
             #numpy_subgraph_feature = np.array(subgraph_feature)
             #subgraph_feature_tensor = torch.from_numpy(numpy_subgraph_feature)
             #nodes_tensor.append(subgraph_feature_tensor)
-            nodes_tensor.append(torch.tensor(subgraph_feature))
             edges_tensor.append(torch.tensor(subgraph_e))
-            #print("TENSOR")
-            #print(nodes_tensor)
-            
-        #break
+    
+    
+    '''
+    with open('nodes.txt', 'w') as f:
+        f.write(str(nodes_tensor))
+    
+    with open('edges.txt', 'w') as f:
+        f.write(str(edges_tensor))
+    
+    with open('ground_truth.txt', 'w') as f:
+        f.write(str(ground_truth_tensor))
+    '''
+
+    

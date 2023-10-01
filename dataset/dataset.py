@@ -19,6 +19,8 @@ if __name__ == "__main__":
 
     nodes_tensor = [] #Array di tensori. Ogni tensore corrisponde a un sottografo; quest'ultimo è caratterizzato dai nodi che
                       #lo compongono, ovvero dalle loro features.
+    edges_tensor = [] #Array di tensori. Ogni tensore corrisponde a un sottografo; quest'ultimo è caratterizzato dagli archi che
+                      #lo compongono, ovvero dai nodi di partenza e di arrivo.
 
     ground_truth_tensor = []
 
@@ -103,12 +105,21 @@ if __name__ == "__main__":
             for node in subgraph:
                 subgraph_feature.append([float(node[2]), float(node[3]), float(node[4])])
 
-    
+    for graph in subgraph_edges:
+        for subgraph in graph:
+            subgraph_e = []
+            start_nodes = []
+            end_nodes = []
+            for edge in subgraph:
+                start_nodes.append(float(edge[0]))
+                end_nodes.append(float(edge[1]))
+            subgraph_e.append([start_nodes, end_nodes])
 
             #numpy_subgraph_feature = np.array(subgraph_feature)
             #subgraph_feature_tensor = torch.from_numpy(numpy_subgraph_feature)
             #nodes_tensor.append(subgraph_feature_tensor)
             nodes_tensor.append(torch.tensor(subgraph_feature))
+            edges_tensor.append(torch.tensor(subgraph_e))
             #print("TENSOR")
             #print(nodes_tensor)
             

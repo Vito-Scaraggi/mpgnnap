@@ -13,9 +13,14 @@ if __name__ == "__main__":
     edges = [] #Stesso di sopra, ma con gli archi.
 
     # array che contiene tutti i sottografi del grafo in esame
-    subgraph_nodes = [] #Array di coppie chiave-valore. La chiave è l'indice del grafo in esame, il valore è un array tridimensionale
-                        #dove, al livello più esterno ho tutti i sottografi del grafo, in quello più interno i nodi di quel sottografo.
+    subgraph_nodes = [] #Array a 4 dimensioni. Quella più esterna racchiude tutti i grafi; quella subito dopo tutti i sottografi
+                        #di quel grafo; poi tutti i nodi di quel sottografo.
     subgraph_edges = [] #Stesso di sopra, ma con gli archi.
+
+    nodes_tensor = [] #Array di tensori. Ogni tensore corrisponde a un sottografo; quest'ultimo è caratterizzato dai nodi che
+                      #lo compongono, ovvero dalle loro features.
+
+    ground_truth_tensor = []
 
     for i in range(0, len(graphs)):
         graphs[i] = graphs[i][3:] #graphs[i] = grafo i-esimo
@@ -58,42 +63,36 @@ if __name__ == "__main__":
             tmp_nodes = []
             
             #appendiamo i sottografi rimuovendo un nodo alla volta
-            for j in range(len(graph_nodes)-1, 1, -1):
-                if j == len(graph_nodes)-1:
+            for k in range(len(graph_nodes)-1, 1, -1):
+                if k == len(graph_nodes)-1:
                     tmp = copy.deepcopy(graph_nodes)
                 else:
                     tmp = copy.deepcopy(tmp)
-                tmp.pop(j)
+                tmp.pop(k)
 
                 tmp_nodes.append(tmp)
                 
-            subgraph_nodes.append((i, tmp_nodes))
+            subgraph_nodes.append(tmp_nodes)
             
             #Creare subgraph_edges
             
             #Vanno aggiunti qui invece che sopra ?
             #.extend(subgraph_nodes)
             #.extend(subgraph_edges)
+    
+    for graph in subgraph_nodes:
+        for subgraph in graph:
+            subgraph_feature = []
+            for node in subgraph:
+                subgraph_feature.append([float(node[2]), float(node[3]), float(node[4])])
 
-            #print("SUBGRAPHS_NODES")
-            #print(subgraph_nodes)
-            #break
-        
-        
-        
-        
-        #print("NODES")
-        #print(nodes)
-        #print("EDGES")
-        #print(edges)
-        '''
-        if i==1:
-            numpy_nodes = np.array(nodes)
-            print("NUMPY_NODES")
-            print(numpy_nodes)
+    
 
-            pytorch_tensor = torch.from_numpy(numpy_nodes)
-            print("PYTORCH_TENSOR")
-            print(pytorch_tensor)
-            break
-        '''
+            #numpy_subgraph_feature = np.array(subgraph_feature)
+            #subgraph_feature_tensor = torch.from_numpy(numpy_subgraph_feature)
+            #nodes_tensor.append(subgraph_feature_tensor)
+            nodes_tensor.append(torch.tensor(subgraph_feature))
+            #print("TENSOR")
+            #print(nodes_tensor)
+            
+        #break

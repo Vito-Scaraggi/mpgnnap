@@ -60,7 +60,8 @@ if __name__ == "__main__":
             nodes.append(graph_nodes)
             edges.append(graph_edges)
 
-            tmp_nodes = []
+            tmp_nodes = [] #contiene i sottografi del grafo in esame
+            tmp_edges = [] #array di array di array che contiene gli archi dei sottografi del grafo in esame
             
             #appendiamo i sottografi rimuovendo un nodo alla volta
             for k in range(len(graph_nodes)-1, 1, -1):
@@ -69,16 +70,32 @@ if __name__ == "__main__":
                 else:
                     tmp = copy.deepcopy(tmp)
                 tmp.pop(k)
-
                 tmp_nodes.append(tmp)
                 
+                tmp_edges2 = [] #array di array che contiene archi di un sottografo
+                
+                for edge in graph_edges:
+                    index = len(graph_nodes)-1-k  
+                    index_nodes = []
+                    
+                    #Lista dei nodi del sottografo in esame
+                    for node_in_subgraph in tmp_nodes[index]:
+                        index_nodes.append(node_in_subgraph[0])
+                    
+                    #Check se l'arco è contenuto nel sottografo
+                    if edge[0] in index_nodes and edge[1] in index_nodes:
+                        tmp_edges2.append(edge)
+                
+                #appendiamo gli archi del sottografo in esame alla lista di quelli appertenenti al grafo
+                tmp_edges.append(tmp_edges2)
+                
+            # array di array di array di array strutturato cosi: 
+            # grafo -> sottografo -> nodi del sottografo -> valori nodo
             subgraph_nodes.append(tmp_nodes)
-            
-            #Creare subgraph_edges
-            
-            #Vanno aggiunti qui invece che sopra ?
-            #.extend(subgraph_nodes)
-            #.extend(subgraph_edges)
+            # array di array di array di array strutturato cosi: 
+            # grafo -> sottografo -> archi del sottografo -> valori arco
+            subgraph_edges.append(tmp_edges) 
+
     
     for graph in subgraph_nodes:
         for subgraph in graph:

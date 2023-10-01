@@ -54,28 +54,24 @@ if __name__ == "__main__":
             nodes.append(graph_nodes)
             edges.append(graph_edges)
             
-            tmp = graph_nodes.copy()
-            
-            subgraph_nodes.append(tmp) # aggiungiamo il grafo completo
-            
             #appendiamo i sottografi rimuovendo un nodo alla volta
             for j in range(len(graph_nodes)-1,1,-1):
                 if j == len(graph_nodes)-1:
-                    tmp_copy = copy.deepcopy(tmp)
+                    tmp = copy.deepcopy(graph_nodes)
                 else:
-                    tmp_copy = copy.deepcopy(tmp_copy)
-                tmp_copy.pop(j)
+                    tmp = copy.deepcopy(tmp)
+                tmp.pop(j)
                 
-                subgraph_nodes.append(tmp_copy)
+                subgraph_nodes.append(tmp)
             
             #Creare subgraph_edges
             
             #Vanno aggiunti qui invece che sopra ?
-            #nodes.append(subgraph_nodes)
-            #edges.append(subgraph_edges)
-            
+            #.extend(subgraph_nodes)
+            #.extend(subgraph_edges)
+
             #print("SUBGRAPHS_NODES")
-            #print(subgraphs_nodes)
+            #print(subgraph_nodes)
             #break
         
         

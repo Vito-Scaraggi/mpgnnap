@@ -2,19 +2,19 @@ import torch
 import numpy as np
 import copy
 import os.path
+from torch_geometric.data import Data, Dataset
+from torch_geometric.loader import DataLoader
 
 E_PARTIAL_PATH = 'dataset/tensors_files/e_'
 N_PARTIAL_PATH = 'dataset/tensors_files/n_'
 GT_PARTIAL_PATH = 'dataset/tensors_files/gt_'
+SAVE_DATASET_PATH = 'dataset/data/data_to_load.pt'
 
-if __name__ == "__main__":
-    pass
-    
-class Dataset:
+class CreateDataset:
     def __init__(self):
         pass
     
-    def create_tensors(phase: int):
+    def create_tensors(self, phase: int):
         if phase == 0:
             path = 'train.pt'
             file_path = 'training.g'
@@ -179,3 +179,51 @@ class Dataset:
             ground_truth_tensor = torch.load(GT_PARTIAL_PATH + path)
 
         return nodes_tensor, edges_tensor, ground_truth_tensor
+    
+    #Transform a graph from tensor to pytorch geometric graph
+    def tensor_to_pytorch_graph(self,n,e,gt):
+        
+        torch_graph = Data(
+            x= n,
+            edge_index= e,
+            y= gt
+        )
+        return torch_graph
+        
+    def dataLoad(self):
+        n, e, gt = self.create_tensors(0)
+        data_list = []
+        for i in range (0,len(n)):
+            pytorch_graph = self.tensor_to_pytorch_graph(n[i],e[i],gt[i])
+            data_list.append(pytorch_graph)
+        #data_list = [self.tensor_to_pytorch_graph(node,edge,gt) for node,edge,gt in n,e,gt] # Convert each graph to a pytorch geometric graph. the label is now stored as graph.y
+
+        loader = DataLoader(data_list, batch_size=4, shuffle=True)
+        
+        for i, x in enumerate(loader):
+            print(f"{i} - {x} ")
+            break
+        #print(len(loader))
+
+    def read(self):
+        a = torch.load(SAVE_DATASET_PATH)
+        
+        #print(a_x)
+'''     
+class CustomDataset(Dataset):
+    def __init__(self, data_list):
+        self.data = data_list
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        sample = self.data[idx]
+        # You can process the sample here if needed
+        return sample
+''' 
+if __name__ == "__main__":
+    x = CreateDataset()
+    x.dataLoad()
+    pass
+    

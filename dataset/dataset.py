@@ -11,6 +11,8 @@ if __name__ == "__main__":
     pass
     
 class Dataset:
+    def __init__(self):
+        pass
     
     def create_tensors(phase: int):
         if phase == 0:

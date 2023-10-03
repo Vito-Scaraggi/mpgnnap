@@ -2,13 +2,14 @@ import torch
 import numpy as np
 import copy
 import os.path
-from torch_geometric.data import Data, Dataset
+from torch_geometric.data import Data, Dataset, Batch
 from torch_geometric.loader import DataLoader
 
 E_PARTIAL_PATH = 'dataset/tensors_files/e_'
 N_PARTIAL_PATH = 'dataset/tensors_files/n_'
 GT_PARTIAL_PATH = 'dataset/tensors_files/gt_'
 SAVE_DATASET_PATH = 'dataset/data/data_to_load.pt'
+BATCH_SIZE = 4
 
 class CreateDataset:
     def __init__(self):
@@ -191,37 +192,41 @@ class CreateDataset:
         return torch_graph
         
     def dataLoad(self):
+        #popola le variabili n, e, gt con i tensori dei grafi
         n, e, gt = self.create_tensors(0)
         data_list = []
+        
+        #Creiamo la lista di grafi pytorch geometric
         for i in range (0,len(n)):
             pytorch_graph = self.tensor_to_pytorch_graph(n[i],e[i],gt[i])
             data_list.append(pytorch_graph)
-        #data_list = [self.tensor_to_pytorch_graph(node,edge,gt) for node,edge,gt in n,e,gt] # Convert each graph to a pytorch geometric graph. the label is now stored as graph.y
-
-        loader = DataLoader(data_list, batch_size=4, shuffle=True)
         
-        for i, x in enumerate(loader):
-            print(f"{i} - {x} ")
-            break
+        #Convertiamo la lista di data in un dataset
+        customDataset = GraphDataset(data_list)   
+        
+        loader = DataLoader(customDataset, batch_size=BATCH_SIZE, shuffle=True)
+        
+        for i, batch in enumerate(loader):
+            print(f"{i} - Grafi nel batch = {Batch(batch).num_graphs} ")
+            print(f"{i} - Nodi nel batch = {batch.x} ")
+            print(f"{i} - Archi nel batch = {batch.edge_index} ")
+            print(f"{i} - One hot encoded vectors nel batch = {batch.y} ")
+            if i == 1:
+                break
         #print(len(loader))
 
-    def read(self):
-        a = torch.load(SAVE_DATASET_PATH)
-        
-        #print(a_x)
-'''     
-class CustomDataset(Dataset):
+#Dataset personalizzato per caricare i dati che sono sotto forma di List[Data]
+class GraphDataset(Dataset):
     def __init__(self, data_list):
         self.data = data_list
+        super(GraphDataset, self).__init__()
 
-    def __len__(self):
+    def len(self):
         return len(self.data)
 
-    def __getitem__(self, idx):
-        sample = self.data[idx]
-        # You can process the sample here if needed
-        return sample
-''' 
+    def get(self, idx):
+        return self.data[idx]
+
 if __name__ == "__main__":
     x = CreateDataset()
     x.dataLoad()

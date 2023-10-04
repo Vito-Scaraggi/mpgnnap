@@ -2,14 +2,12 @@ import torch
 import numpy as np
 import copy
 import os.path
-from torch_geometric.data import Data, Dataset, Batch
+from torch_geometric.data import Data, Dataset
 from torch_geometric.loader import DataLoader
 
-E_PARTIAL_PATH = 'dataset/tensors_files/e_'
-N_PARTIAL_PATH = 'dataset/tensors_files/n_'
-GT_PARTIAL_PATH = 'dataset/tensors_files/gt_'
+PARTIAL_PATH = 'dataset/tensors_files/'
+
 SAVE_DATASET_PATH = 'dataset/data/data_to_load.pt'
-BATCH_SIZE = 4
 
 class CreateDataset:
     def __init__(self):
@@ -22,18 +20,16 @@ class CreateDataset:
         elif phase == 1:
             path = 'val.pt'
             file_path = 'val.g'
-        elif path == 2:
+        elif phase == 2:
             path = 'test.pt'
             file_path = 'test.g'
         else:
             raise ValueError('Unknown value. Allowed values are between 0 and 2.')
 
-        if (not os.path.isfile(E_PARTIAL_PATH + path)) or (not os.path.isfile(N_PARTIAL_PATH + path)) or (not os.path.isfile(GT_PARTIAL_PATH + path)):
-            with open('dataset/attributi.txt', 'r') as file:
-                content = file.read()
-
-            labels = content.split('\n')
-
+        if (not os.path.isfile(PARTIAL_PATH + path[:len(path)-3] + '/e_' + path)) or (not os.path.isfile(PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)) or (not os.path.isfile(PARTIAL_PATH + path[:len(path)-3] + '/gt_' + path)):
+            
+            labels = self.getLabels()
+            
             with open('dataset/' + file_path, 'r') as f:
                 contents = f.read()
 
@@ -141,6 +137,7 @@ class CreateDataset:
                     for index2,node in enumerate(subgraph):
                         subgraph_feature.append([float(node[2]), float(node[3]), float(node[4])])
                         
+                        #Creazione one-hot encoded vector
                         if index2 == len(subgraph)-1:
                             last_subgraph_node_index = nodes[index].index(node)
                             node_to_predict = nodes[index][last_subgraph_node_index + 1]
@@ -170,16 +167,26 @@ class CreateDataset:
                     #nodes_tensor.append(subgraph_feature_tensor)
                     edges_tensor.append(torch.tensor(subgraph_e))
 
-            torch.save(nodes_tensor, N_PARTIAL_PATH + path)
-            torch.save(edges_tensor, E_PARTIAL_PATH + path)
-            torch.save(ground_truth_tensor, GT_PARTIAL_PATH + path)
+            os.mkdir(PARTIAL_PATH + path[:len(path)-3])
+            torch.save(nodes_tensor, PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)
+            torch.save(edges_tensor, PARTIAL_PATH + path[:len(path)-3] + '/e_' + path)
+            torch.save(ground_truth_tensor, PARTIAL_PATH + path[:len(path)-3] + '/gt_' + path)
 
         else:
-            nodes_tensor = torch.load(N_PARTIAL_PATH + path)
-            edges_tensor = torch.load(E_PARTIAL_PATH + path)
-            ground_truth_tensor = torch.load(GT_PARTIAL_PATH + path)
+            nodes_tensor = torch.load(PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)
+            edges_tensor = torch.load(PARTIAL_PATH + path[:len(path)-3] + '/e_' + path)
+            ground_truth_tensor = torch.load(PARTIAL_PATH + path[:len(path)-3] + '/gt_' + path)
 
         return nodes_tensor, edges_tensor, ground_truth_tensor
+    
+    def getLabels(self):
+        labels = []
+        with open('dataset/attributi.txt', 'r') as file:
+                content = file.read()
+
+        labels = content.split('\n')
+        return labels
+
     
     #Transform a graph from tensor to pytorch geometric graph
     def tensor_to_pytorch_graph(self,n,e,gt):
@@ -190,10 +197,11 @@ class CreateDataset:
             y= gt
         )
         return torch_graph
-        
-    def dataLoad(self):
+    
+    #mode 0: training, 1: validation, 2: test
+    def getDataset(self,mode):
         #popola le variabili n, e, gt con i tensori dei grafi
-        n, e, gt = self.create_tensors(0)
+        n, e, gt = self.create_tensors(mode)
         data_list = []
         
         #Creiamo la lista di grafi pytorch geometric
@@ -202,18 +210,8 @@ class CreateDataset:
             data_list.append(pytorch_graph)
         
         #Convertiamo la lista di data in un dataset
-        customDataset = GraphDataset(data_list)   
-        
-        loader = DataLoader(customDataset, batch_size=BATCH_SIZE, shuffle=True)
-        
-        for i, batch in enumerate(loader):
-            print(f"{i} - Grafi nel batch = {Batch(batch).num_graphs} ")
-            print(f"{i} - Nodi nel batch = {batch.x} ")
-            print(f"{i} - Archi nel batch = {batch.edge_index} ")
-            print(f"{i} - One hot encoded vectors nel batch = {batch.y} ")
-            if i == 1:
-                break
-        #print(len(loader))
+        graphsDataset = GraphDataset(data_list)
+        return graphsDataset   
 
 #Dataset personalizzato per caricare i dati che sono sotto forma di List[Data]
 class GraphDataset(Dataset):
@@ -226,9 +224,3 @@ class GraphDataset(Dataset):
 
     def get(self, idx):
         return self.data[idx]
-
-if __name__ == "__main__":
-    x = CreateDataset()
-    x.dataLoad()
-    pass
-    

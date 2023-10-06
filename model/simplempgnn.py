@@ -51,14 +51,18 @@ class SimpleMPGNN(Module):
             aggr_type : str = "sum",
             aggr_args : dict = None,
             use_cuda_if_available: bool = True,
+            seed : int = 42
         ):
 
         super().__init__()
 
         if use_cuda_if_available and torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
             self.device = torch.device("cuda:0") #TODO: Add support for multiple GPUs?
             print("Using GPU")
         else:
+            torch.manual_seed(seed)
             self.device = torch.device("cpu")
             print("Using CPU")
 
@@ -66,6 +70,8 @@ class SimpleMPGNN(Module):
         self.dense_layer_sizes = dense_layer_sizes
         self.dropout_rate = dropout_rate
         #self.learning_rate = learning_rate
+        self.aggr_type = aggr_type
+        self.aggr_args = aggr_args
 
         self.num_features = num_node_features
         # number of nodes ?
@@ -88,6 +94,8 @@ class SimpleMPGNN(Module):
         for in_size, out_size in zip(dense_layer_sizes, dense_layer_sizes[1:]):
             self.linears.append(Linear(in_size, out_size))
         self.linear_output = Linear(dense_layer_sizes[-1], self.num_output_features) # Final layer for output
+        
+        print(self)
 
     def reset_parameters(self):
         self.conv1.reset_parameters()
@@ -101,17 +109,18 @@ class SimpleMPGNN(Module):
         for linear in self.linears:
             linear.reset_parameters()
 
-    def forward(self, x, edge_index):
-        edge_index = sort_edge_index(edge_index, sort_by_row = False)
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        #edge_index = sort_edge_index(edge_index, sort_by_row = False)
         # Graph Convolution
         x = F.relu(self.conv1(x, edge_index))
         for conv in self.convs:
             x = F.relu(conv(x, edge_index))
         
-        x = self.aggr_layer(x)
-        
+        x = self.aggr_layer(x, batch)
         # Reshape the tensor to be able to pass it to the dense layers (flatten ?)
-        x = torch.flatten(x)
+        #x = torch.flatten(x)
+        #x = x.view(len(x), -1)
         
         # Dropout
         x = F.dropout(x, p=self.dropout_rate, training=self.training)
@@ -130,6 +139,8 @@ class SimpleMPGNN(Module):
             "Dense Layer Sizes": self.dense_layer_sizes,
             "Dropout Rate": self.dropout_rate,
             #"Learning Rate": self.learning_rate,
+            "Aggregation type" : self.aggr_type,
+            "Aggregation args" : self.aggr_args,
             "Distinct Activities": self.num_output_features,
         }
         return self.__class__.__name__ + " Model: " + str(params)

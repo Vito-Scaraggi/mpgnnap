@@ -3,7 +3,6 @@ import numpy as np
 import copy
 import os.path
 from torch_geometric.data import Data, Dataset
-from torch_geometric.loader import DataLoader
 
 PARTIAL_PATH = 'dataset/tensors_files/'
 
@@ -158,14 +157,14 @@ class CreateDataset:
                         #-1 perchè l'arco deve far riferimento al nodo e 
                         # in questo caso il numero del nodo è la posizione nell'array 
                         # che quindi inizia da 0 e non da 1
-                        start_nodes.append(float(edge[0]) -1) 
-                        end_nodes.append(float(edge[1]) -1)
+                        start_nodes.append(int(float((edge[0]))) -1) 
+                        end_nodes.append(int(float((edge[1]))) -1)
                     subgraph_e.append([start_nodes, end_nodes])
 
                     #numpy_subgraph_feature = np.array(subgraph_feature)
                     #subgraph_feature_tensor = torch.from_numpy(numpy_subgraph_feature)
                     #nodes_tensor.append(subgraph_feature_tensor)
-                    edges_tensor.append(torch.tensor(subgraph_e))
+                    edges_tensor.extend(torch.tensor(subgraph_e))
 
             os.mkdir(PARTIAL_PATH + path[:len(path)-3])
             torch.save(nodes_tensor, PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)

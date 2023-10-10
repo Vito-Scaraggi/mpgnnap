@@ -1,3 +1,5 @@
 env
 __pycache__
-tensor_files
+tensors_files
+tmp*
+data

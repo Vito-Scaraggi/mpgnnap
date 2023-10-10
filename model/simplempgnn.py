@@ -1,3 +1,4 @@
+import json
 import torch
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear, ReLU, Module
@@ -5,8 +6,8 @@ from torch_geometric.nn import MessagePassing, EdgeConv
 from torch_geometric.utils import sort_edge_index
 from typing import List
 
-from model.utils import AggrFactory
 
+from model.utils import AggrFactory
 
 # implementation of "Dynamic Graph CNN for Learning on Point Clouds" paper in pytorch geometric
 class EdgeConv(MessagePassing):
@@ -41,60 +42,45 @@ class EdgeConv(MessagePassing):
 
 class SimpleMPGNN(Module):
 
-    def __init__(self,
-            num_node_features: int,
-            graph_conv_layer_sizes: List[int],
-            dense_layer_sizes: List[int],
-            dropout_rate: float,
-            #learning_rate: float,
-            activities_index: List[str],
-            aggr_type : str = "sum",
-            aggr_args : dict = None,
-            use_cuda_if_available: bool = True,
-            seed : int = 42
-        ):
+    def __init__(self, activities_index: List[str], model_cfg):
 
         super().__init__()
 
-        if use_cuda_if_available and torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
-            torch.cuda.manual_seed_all(seed)
+        if model_cfg.use_cuda_if_available and torch.cuda.is_available():
             self.device = torch.device("cuda:0") #TODO: Add support for multiple GPUs?
             print("Using GPU")
         else:
-            torch.manual_seed(seed)
             self.device = torch.device("cpu")
             print("Using CPU")
 
-        self.graph_conv_layer_sizes = graph_conv_layer_sizes
-        self.dense_layer_sizes = dense_layer_sizes
-        self.dropout_rate = dropout_rate
-        #self.learning_rate = learning_rate
-        self.aggr_type = aggr_type
-        self.aggr_args = aggr_args
+        self.graph_conv_layer_sizes = model_cfg.graph_conv_layer_sizes
+        self.dense_layer_sizes = model_cfg.dense_layer_sizes
+        self.aggr_type = model_cfg.aggregation.mode
+        self.aggr_args = model_cfg.aggregation.args.__dict__  
+        self.dropout_rate = model_cfg.dropout_rate
+        self.num_features = model_cfg.num_node_features
 
-        self.num_features = num_node_features
         # number of nodes ?
         self.num_output_features = len(activities_index) # One-hot encoding of the activity
 
         # Graph Convolutions
-        self.conv1 = EdgeConv(self.num_features, graph_conv_layer_sizes[0])
+        self.conv1 = EdgeConv(self.num_features, self.graph_conv_layer_sizes[0]).to(self.device)
         self.convs = torch.nn.ModuleList()
-        for in_size, out_size in zip(graph_conv_layer_sizes, graph_conv_layer_sizes[1:]):
-            self.convs.append(EdgeConv(in_size, out_size))
+        for in_size, out_size in zip(self.graph_conv_layer_sizes, self.graph_conv_layer_sizes[1:]):
+            self.convs.append(EdgeConv(in_size, out_size).to(self.device))
         
         aggr_factory = AggrFactory()
-        self.aggr_layer  = aggr_factory.factory(aggr_type, **aggr_args)
+        self.aggr_layer  = aggr_factory.factory(self.aggr_type, **self.aggr_args)
 
         # Dense Layers
         # Input size from the source code
         #TODO: If len(dense_layer_sizes) == 0 this would fail
-        self.linear = torch.nn.Linear( aggr_factory.dl_in_channels_factor(aggr_type, **aggr_args) * graph_conv_layer_sizes[-1], dense_layer_sizes[0])
+        self.linear = torch.nn.Linear( aggr_factory.dl_in_channels_factor(self.aggr_type, **self.aggr_args) * self.graph_conv_layer_sizes[-1], 
+                                      self.dense_layer_sizes[0]).to(self.device)
         self.linears = torch.nn.ModuleList()
-        for in_size, out_size in zip(dense_layer_sizes, dense_layer_sizes[1:]):
-            self.linears.append(Linear(in_size, out_size))
-        self.linear_output = Linear(dense_layer_sizes[-1], self.num_output_features) # Final layer for output
-        
+        for in_size, out_size in zip(self.dense_layer_sizes, self.dense_layer_sizes[1:]):
+            self.linears.append(Linear(in_size, out_size).to(self.device))
+        self.linear_output = Linear(self.dense_layer_sizes[-1], self.num_output_features).to(self.device) # Final layer for output
         print(self)
 
     def reset_parameters(self):
@@ -111,6 +97,9 @@ class SimpleMPGNN(Module):
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
+        x = x.to(self.device)
+        edge_index = edge_index.to(self.device)
+        batch = batch.to(self.device)
         #edge_index = sort_edge_index(edge_index, sort_by_row = False)
         # Graph Convolution
         x = F.relu(self.conv1(x, edge_index))
@@ -138,9 +127,8 @@ class SimpleMPGNN(Module):
             "Graph Conv. Layer Sizes": self.graph_conv_layer_sizes,
             "Dense Layer Sizes": self.dense_layer_sizes,
             "Dropout Rate": self.dropout_rate,
-            #"Learning Rate": self.learning_rate,
             "Aggregation type" : self.aggr_type,
             "Aggregation args" : self.aggr_args,
             "Distinct Activities": self.num_output_features,
         }
-        return self.__class__.__name__ + " Model: " + str(params)
+        return self.__class__.__name__ + " Model: " + json.dumps(params, indent=4)

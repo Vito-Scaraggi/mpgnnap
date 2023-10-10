@@ -1,0 +1,65 @@
+{
+    "type" : "object",
+    "properties" : {
+        "seed" : {
+            "type" : "integer"
+        },
+        "model" :{
+            "type" : "object",
+            "properties" : {
+                "num_node_features" : {
+                    "type" : "integer"
+                },
+                "graph_conv_layer_sizes" : {
+                    "type" : "array",
+                    "items" : {
+                        "type" : "integer"
+                    }
+                },
+                "dense_layer_sizes" : {
+                    "type" : "array",
+                    "items" : {
+                        "type" : "integer"
+                    }
+                },
+                "dropout_rate" : {
+                    "type" : "number"
+                },
+                "aggregation":{
+                    "type" : "object",
+                    "properties" : {
+                        "mode" : {
+                            "type" : "string",
+                            "enum" : ["sum", "mean", "sort", "set2set"]
+                        },
+                        "args" : {
+                            "type" : "object"
+                        }
+                    }
+                },
+                "use_cuda_if_available" : {
+                    "type" : "boolean"
+                }
+            }
+        },
+        "training" : {
+            "type" : "object",
+            "properties" : {
+                "batch_size" : {
+                    "type" : "integer"
+                },
+                "epochs" : {
+                    "type" : "integer"
+                },
+                "learning_rate" : {
+                    "type" : "number"
+                }
+            }
+        },
+        "test" : {
+            "batch_size" : {
+                "type" : "integer"
+            }
+        }
+    }
+}

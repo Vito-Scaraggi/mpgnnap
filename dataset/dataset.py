@@ -10,6 +10,7 @@ SAVE_DATASET_PATH = 'dataset/data/data_to_load.pt'
 
 class CreateDataset:
     def __init__(self):
+        torch.set_printoptions(precision=15)
         pass
     
     def create_tensors(self, phase: int):

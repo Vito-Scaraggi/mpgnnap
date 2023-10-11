@@ -167,7 +167,8 @@ class CreateDataset:
                     #nodes_tensor.append(subgraph_feature_tensor)
                     edges_tensor.extend(torch.tensor(subgraph_e))
 
-            os.mkdir(PARTIAL_PATH + path[:len(path)-3])
+            if not os.path.exists(PARTIAL_PATH + path[:len(path)-3]):    
+                os.mkdir(PARTIAL_PATH + path[:len(path)-3])
             torch.save(nodes_tensor, PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)
             torch.save(edges_tensor, PARTIAL_PATH + path[:len(path)-3] + '/e_' + path)
             torch.save(ground_truth_tensor, PARTIAL_PATH + path[:len(path)-3] + '/gt_' + path)

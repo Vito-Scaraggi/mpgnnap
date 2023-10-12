@@ -1,6 +1,8 @@
 from torchmetrics.classification import MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score
+import torch
 
 class Metrics():
+
     def __init__(self, num_classes, device):
         self.metrics = {        
             "accuracy" : MulticlassAccuracy(num_classes = num_classes, average = "micro" ).to(device),
@@ -13,12 +15,18 @@ class Metrics():
             "f1score_per_class" : MulticlassF1Score(num_classes = num_classes, average = None).to(device),
         }
 
+        for metric in self.metrics.values():
+            metric.persistent(mode = True)
+
+        self.num_classes = num_classes        
+        #self.support_per_class = torch.zeros(num_classes, dtype=torch.int64)
         self.accuracies = []
         self.precisions = []
         self.recalls = []
         self.f1scores = []
 
     def update(self, pred, gt):
+
         for metric in self.metrics.values():
             metric.update(pred, gt)
 
@@ -42,7 +50,6 @@ class Metrics():
     
     def get_state(self, complete = False):
         state = {}
-        
         if complete:
             for key, val in self.metrics.items():
                 state[key] = val.compute()
@@ -51,6 +58,12 @@ class Metrics():
         state["precisions"] = self.precisions
         state["recalls"] = self.recalls
         state["f1scores"] = self.f1scores
+        
+        
+        tp = self.metrics["accuracy_per_class"].state_dict()["tp"].type(torch.int64)
+        fn = self.metrics["accuracy_per_class"].state_dict()["fn"].type(torch.int64)
+        state["support_per_class"] = (tp + fn).tolist()
+
         return state
 
     def reset(self):

@@ -2,12 +2,13 @@ import json
 import torch
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear, ReLU, Module
-from torch_geometric.nn import MessagePassing, EdgeConv
+from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import sort_edge_index
 from typing import List
 
 
 from model.utils import AggrFactory
+
 
 # implementation of "Dynamic Graph CNN for Learning on Point Clouds" paper in pytorch geometric
 class EdgeConv(MessagePassing):
@@ -65,8 +66,10 @@ class SimpleMPGNN(Module):
 
         # Graph Convolutions
         self.conv1 = EdgeConv(self.num_features, self.graph_conv_layer_sizes[0]).to(self.device)
+        #self.conv1 = MessagePassing().to(self.device) 
         self.convs = torch.nn.ModuleList()
         for in_size, out_size in zip(self.graph_conv_layer_sizes, self.graph_conv_layer_sizes[1:]):
+            #self.convs.append(MessagePassing().to(self.device))
             self.convs.append(EdgeConv(in_size, out_size).to(self.device))
         
         aggr_factory = AggrFactory()

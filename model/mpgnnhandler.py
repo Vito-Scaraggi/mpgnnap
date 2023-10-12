@@ -5,6 +5,7 @@ import json
 
 from model.simplempgnn import SimpleMPGNN
 from model.metrics import Metrics
+from model.utils import EarlyStopper
 
 class MPGNNHandler():
 
@@ -57,6 +58,7 @@ class MPGNNHandler():
 
         model_best = None
         best_metric = 0.0
+        early_stopper = EarlyStopper(patience= train_cfg.early_stop.patience, min_delta=train_cfg.early_stop.min_delta)
 
         for epoch in range(self.epochs):
             self.model.train()
@@ -118,7 +120,10 @@ class MPGNNHandler():
 
             self.train_metrics.reset()
             self.validation_metrics.reset()
-
+            if early_stopper.early_stop(this_epoch_losses[1]):             
+                print(f"Early stopping at epoch {epoch+1}")
+                break
+            
         # saving model best to file
         torch.save(model_best, self.save_model_path)
         

@@ -53,6 +53,17 @@
                 },
                 "learning_rate" : {
                     "type" : "number"
+                },
+                "early_stop" : {
+                    "type": "object",
+                    "properties":{
+                        "patience" : {
+                            "type" : "integer"
+                        },
+                        "min_delta" : {
+                            "type" : "number"
+                        }
+                    }
                 }
             }
         },

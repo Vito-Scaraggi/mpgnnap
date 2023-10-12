@@ -6,20 +6,22 @@ import json
 from model.simplempgnn import SimpleMPGNN
 from model.metrics import Metrics
 
+from torch_geometric.loader import DataLoader
+
 class MPGNNHandler():
 
-    def __init__(self, activities_index, cfg, load_weights = False):
+    def __init__(self, activities_index, cfg, outpath = "data/exp", load_weights = False):
         try:
             self.cfg = cfg.get_config()
             self.model = SimpleMPGNN(activities_index, self.cfg.model)
             self.model = self.model.to(self.model.device)
-            
-            self.save_model_path = "data/model_best.pth"
-            self.save_meta_path = "data/meta.pth"
-            self.save_results_path = f"data/results_{'test' if load_weights else 'train'}.pth"
+            self.save_model_path = os.path.join(outpath , "model_best.pth")
+            self.save_meta_path = os.path.join(outpath, "meta.pth")
+            self.save_results_path = os.path.join(outpath , f"results_{'test' if load_weights else 'train'}.pth")
+            self.outpath = outpath
 
-            if not os.path.exists("data"):
-                os.makedirs("data")
+            if not os.path.exists(outpath):
+                 os.makedirs(outpath)
             
             if load_weights:
                 self.meta = torch.load(self.save_meta_path)
@@ -28,16 +30,21 @@ class MPGNNHandler():
             else:
                 print("Configs: " + json.dumps(cfg.get_config_json(), indent=4))
                 self.meta =  cfg.get_config_json()
-        
+                    
         except FileNotFoundError:
             raise FileNotFoundError("No weights found")        
 
-    def train(self, train_data, validation_data):
+    # def train(self, train_data, validation_data):
+    def train(self, train_dataset, validation_dataset):
+            
         train_cfg = self.cfg.training
+        torch.manual_seed(self.cfg.seed)
+        torch.cuda.manual_seed(self.cfg.seed)
+        torch.backends.cudnn.deterministic = True
 
-        self.train_data = train_data
-        self.validation_data = validation_data
-
+        self.train_data = DataLoader(train_dataset, batch_size = train_cfg.batch_size, shuffle=True)
+        self.validation_data = DataLoader(validation_dataset, batch_size = train_cfg.batch_size, shuffle=True)
+        
         self.batch_size = train_cfg.batch_size
         self.epochs = train_cfg.epochs
         self.learning_rate = train_cfg.learning_rate
@@ -119,6 +126,7 @@ class MPGNNHandler():
             self.train_metrics.reset()
             self.validation_metrics.reset()
 
+        
         # saving model best to file
         torch.save(model_best, self.save_model_path)
         

@@ -1,12 +1,11 @@
 import torch
-from torch.optim.lr_scheduler import MultiStepLR
 import os
 import json
+from torch_geometric.loader import DataLoader
 
 from model.simplempgnn import SimpleMPGNN
 from model.metrics import Metrics
-
-from torch_geometric.loader import DataLoader
+from model.utils import EarlyStopper
 
 class MPGNNHandler():
 
@@ -26,7 +25,7 @@ class MPGNNHandler():
             if load_weights:
                 self.meta = torch.load(self.save_meta_path)
                 print("Loaded model: " + json.dumps(self.meta, indent=4))
-                self.model.load_state_dict(torch.load(self.save_model_path))
+                self.model.load_state_dict(torch.load(self.save_model_path, map_location=self.model.device))
             else:
                 print("Configs: " + json.dumps(cfg.get_config_json(), indent=4))
                 self.meta =  cfg.get_config_json()
@@ -50,7 +49,6 @@ class MPGNNHandler():
         self.learning_rate = train_cfg.learning_rate
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        scheduler = MultiStepLR(optimizer, milestones=[20,40], gamma=0.1)
         criterion = torch.nn.CrossEntropyLoss()
         # criterion = torch.nn.L1Loss()
     
@@ -64,6 +62,7 @@ class MPGNNHandler():
 
         model_best = None
         best_metric = 0.0
+        early_stopper = EarlyStopper(patience= train_cfg.early_stop.patience, min_delta=train_cfg.early_stop.min_delta)
 
         for epoch in range(self.epochs):
             self.model.train()
@@ -81,8 +80,6 @@ class MPGNNHandler():
                 pred = torch.argmax(out, dim=1)
                 gt = torch.argmax(label, dim=1).to(self.model.device)
                 self.train_metrics.update(pred, gt)
-
-            scheduler.step()
             
             valid_loss = 0
 
@@ -117,7 +114,7 @@ class MPGNNHandler():
                 model_best = self.model.state_dict()
 
 
-            print(f"Epoch {epoch+1} completed. LR: {scheduler.get_last_lr()}, Avg train. Loss: {this_epoch_losses[0]}, Avg valid. Loss: {this_epoch_losses[1]}")
+            print(f"Epoch {epoch+1} completed. LR: {optimizer.state_dict()['param_groups'][-1]['lr']}, Avg train. Loss: {this_epoch_losses[0]}, Avg valid. Loss: {this_epoch_losses[1]}")
             print("Train metrics:", end = " ")
             self.train_metrics.print_metrics()
             print("Valid metrics:", end = " ")
@@ -125,8 +122,10 @@ class MPGNNHandler():
 
             self.train_metrics.reset()
             self.validation_metrics.reset()
-
-        
+            if early_stopper.early_stop(this_epoch_losses[1]):             
+                print(f"Early stopping at epoch {epoch+1}")
+                break
+            
         # saving model best to file
         torch.save(model_best, self.save_model_path)
         
@@ -159,5 +158,6 @@ class MPGNNHandler():
             self.test_metrics.save_epoch_metrics()
             self.test_metrics.print_metrics()
             
-            self.results = self.test_metrics.get_state(True) 
+            self.results = {}
+            self.results["test_metrics"] = self.test_metrics.get_state(True) 
             torch.save(self.results, self.save_results_path)

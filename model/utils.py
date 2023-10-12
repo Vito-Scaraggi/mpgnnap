@@ -1,4 +1,4 @@
-from torch_geometric.nn.aggr import SumAggregation, MeanAggregation, SortAggregation, Set2Set, AttentionalAggregation
+from torch_geometric.nn.aggr import SumAggregation, MeanAggregation, SortAggregation, Set2Set
 
 class AggrFactory():
 
@@ -8,7 +8,6 @@ class AggrFactory():
             'mean' : MeanAggregation,
             'sort': SortAggregation,
             'set2set': Set2Set,
-            #'att' : AttentionalAggregation
         }
     
     def factory(self, type, **kwargs):
@@ -29,7 +28,5 @@ class AggrFactory():
             return kwargs["k"]
         elif type == "set2set":
             return 2 
-        #elif type == "att":
-        # pass
         else:
             raise ValueError(f"Invalid aggregation type: {type}")

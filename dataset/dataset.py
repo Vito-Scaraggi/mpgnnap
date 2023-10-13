@@ -4,14 +4,10 @@ import copy
 import os.path
 from torch_geometric.data import Data, Dataset
 
-PARTIAL_PATH = 'dataset/tensors_files/'
-
-SAVE_DATASET_PATH = 'dataset/data/data_to_load.pt'
-
 class CreateDataset:
-    def __init__(self):
+    def __init__(self, dataset_path):
+        self.dataset_path = dataset_path
         torch.set_printoptions(precision=15)
-        pass
     
     def create_tensors(self, phase: int):
         if phase == 0:
@@ -26,11 +22,11 @@ class CreateDataset:
         else:
             raise ValueError('Unknown value. Allowed values are between 0 and 2.')
 
-        if (not os.path.isfile(PARTIAL_PATH + path[:len(path)-3] + '/e_' + path)) or (not os.path.isfile(PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)) or (not os.path.isfile(PARTIAL_PATH + path[:len(path)-3] + '/gt_' + path)):
+        if (not os.path.isfile(self.dataset_path + path[:len(path)-3] + '/e_' + path)) or (not os.path.isfile(self.dataset_path + path[:len(path)-3] + '/n_' + path)) or (not os.path.isfile(self.dataset_path + path[:len(path)-3] + '/gt_' + path)):
             
             labels = self.getLabels()
             
-            with open('dataset/' + file_path, 'r') as f:
+            with open('_data/' + file_path, 'r') as f:
                 contents = f.read()
 
             graphs = contents.split('\n\n')
@@ -167,22 +163,22 @@ class CreateDataset:
                     #nodes_tensor.append(subgraph_feature_tensor)
                     edges_tensor.extend(torch.tensor(subgraph_e))
 
-            if not os.path.exists(PARTIAL_PATH + path[:len(path)-3]):    
-                os.mkdir(PARTIAL_PATH + path[:len(path)-3])
-            torch.save(nodes_tensor, PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)
-            torch.save(edges_tensor, PARTIAL_PATH + path[:len(path)-3] + '/e_' + path)
-            torch.save(ground_truth_tensor, PARTIAL_PATH + path[:len(path)-3] + '/gt_' + path)
+            if not os.path.exists(self.dataset_path + path[:len(path)-3]):    
+                os.mkdir(self.dataset_path + path[:len(path)-3])
+            torch.save(nodes_tensor, self.dataset_path + path[:len(path)-3] + '/n_' + path)
+            torch.save(edges_tensor, self.dataset_path + path[:len(path)-3] + '/e_' + path)
+            torch.save(ground_truth_tensor, self.dataset_path + path[:len(path)-3] + '/gt_' + path)
 
         else:
-            nodes_tensor = torch.load(PARTIAL_PATH + path[:len(path)-3] + '/n_' + path)
-            edges_tensor = torch.load(PARTIAL_PATH + path[:len(path)-3] + '/e_' + path)
-            ground_truth_tensor = torch.load(PARTIAL_PATH + path[:len(path)-3] + '/gt_' + path)
+            nodes_tensor = torch.load(self.dataset_path + path[:len(path)-3] + '/n_' + path)
+            edges_tensor = torch.load(self.dataset_path + path[:len(path)-3] + '/e_' + path)
+            ground_truth_tensor = torch.load(self.dataset_path + path[:len(path)-3] + '/gt_' + path)
 
         return nodes_tensor, edges_tensor, ground_truth_tensor
     
     def getLabels(self):
         labels = []
-        with open('dataset/attributi.txt', 'r') as file:
+        with open('_data/attributi.txt', 'r') as file:
                 content = file.read()
 
         labels = content.split('\n')

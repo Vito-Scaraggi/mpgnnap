@@ -2,4 +2,4 @@ env
 __pycache__
 tensors_files
 tmp*
-data
+results

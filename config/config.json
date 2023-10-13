@@ -1,5 +1,7 @@
 {   
     "seed" : 42,
+    "dataset_path" : "dataset/tensors_files",
+    "results_path" : "results/exp",
     "model" : {
         "num_node_features" : 3,
         "graph_conv_layer_sizes" : [32, 32, 32, 32, 32],
@@ -15,7 +17,7 @@
     },
     "training" : {
         "batch_size" : 16,
-        "epochs" : 1,
+        "epochs" : 50,
         "learning_rate" : 0.001,
         "early_stop" : {
             "patience" : 10,

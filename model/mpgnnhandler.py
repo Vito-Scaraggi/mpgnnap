@@ -9,18 +9,18 @@ from model.utils import EarlyStopper
 
 class MPGNNHandler():
 
-    def __init__(self, activities_index, cfg, outpath = "data/exp", load_weights = False):
+    def __init__(self, activities_index, cfg, load_weights = False):
         try:
             self.cfg = cfg.get_config()
+            self.outpath = self.cfg.results_path
             self.model = SimpleMPGNN(activities_index, self.cfg.model)
             self.model = self.model.to(self.model.device)
-            self.save_model_path = os.path.join(outpath , "model_best.pth")
-            self.save_meta_path = os.path.join(outpath, "meta.pth")
-            self.save_results_path = os.path.join(outpath , f"results_{'test' if load_weights else 'train'}.pth")
-            self.outpath = outpath
+            self.save_model_path = os.path.join(self.outpath , "model_best.pth")
+            self.save_meta_path = os.path.join(self.outpath, "meta.pth")
+            self.save_results_path = os.path.join(self.outpath , f"results_{'test' if load_weights else 'train'}.pth")
 
-            if not os.path.exists(outpath):
-                 os.makedirs(outpath)
+            if not os.path.exists(self.outpath):
+                 os.makedirs(self.outpath)
             
             if load_weights:
                 self.meta = torch.load(self.save_meta_path)

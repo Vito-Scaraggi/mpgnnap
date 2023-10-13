@@ -4,6 +4,12 @@
         "seed" : {
             "type" : "integer"
         },
+        "dataset_path" : {
+            "type" : "string"
+        },
+        "results_path" : {
+            "type" : "string"
+        },
         "model" :{
             "type" : "object",
             "properties" : {

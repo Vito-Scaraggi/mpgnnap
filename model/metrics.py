@@ -15,9 +15,7 @@ class Metrics():
             "f1score_per_class" : MulticlassF1Score(num_classes = num_classes, average = None).to(device),
         }
 
-        for metric in self.metrics.values():
-            metric.persistent(mode = True)
-
+        self.metrics["accuracy_per_class"].persistent(mode = True)
         self.num_classes = num_classes        
         #self.support_per_class = torch.zeros(num_classes, dtype=torch.int64)
         self.accuracies = []
@@ -26,7 +24,6 @@ class Metrics():
         self.f1scores = []
 
     def update(self, pred, gt):
-
         for metric in self.metrics.values():
             metric.update(pred, gt)
 

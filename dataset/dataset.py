@@ -4,9 +4,8 @@ import copy
 import os.path
 from torch_geometric.data import Data, Dataset
 
-PARTIAL_PATH = 'dataset/tensors_files/'
-
-SAVE_DATASET_PATH = 'dataset/data/data_to_load.pt'
+#PARTIAL_PATH = 'dataset/tensors_files/'
+PARTIAL_PATH = '/kaggle/working/tensors_files/'
 
 class CreateDataset:
     def __init__(self):

@@ -9,7 +9,8 @@ from config.config import cfg
 import sys
 
 if __name__ == "__main__":
-    out_dir = "data"
+    # out_dir = "data"
+    out_dir = "/kaggle/working/data"
     try:
         team_member = sys.argv[1]
         print("Reading configs...", end = " ")

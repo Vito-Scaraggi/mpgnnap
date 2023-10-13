@@ -4,16 +4,18 @@ from jsonschema.exceptions import SchemaError
 from types import SimpleNamespace
 
 class cfg():
-    def __init__(self):
+    def __init__(self, json_data = None):
         try:
             with open("config/config_schema.json") as f:
                 self.schema = json.load(f)
 
-            with open("config/config.json") as f:
-                config = json.load(f)
-                validate(instance=config, schema=self.schema)
-                self.config = json.loads( json.dumps(config),  object_hook= lambda x : SimpleNamespace(**x))
-                self.config_json = config
+            if json_data is None:
+                with open("config/config.json") as f:
+                    json_data = json.load(f)
+
+            validate(instance=json_data, schema=self.schema)
+            self.config = json.loads( json.dumps(json_data),  object_hook= lambda x : SimpleNamespace(**x))
+            self.config_json = json_data
 
         except FileNotFoundError:
             print("Config files not found")

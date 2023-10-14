@@ -16,8 +16,8 @@
         "use_cuda_if_available" : true
     },
     "training" : {
-        "batch_size" : 256,
-        "epochs" : 1,
+        "batch_size" : 16,
+        "epochs" : 50,
         "learning_rate" : 0.001,
         "early_stop" : {
             "patience" : 10,

@@ -6,15 +6,15 @@ from model.mpgnnhandler import MPGNNHandler
 from dataset.dataset import CreateDataset
 from config.config import cfg
 
-parser = argparse.ArgumentParser(prog='gridsearch')
+parser = argparse.ArgumentParser(prog='grid search')
 parser.add_argument('team_member', type=str, help='team member name')
-parser.add_argument('-s', type=int, default=0, help='skip first n combinations')
+parser.add_argument('-s', '--skip', type=int, default=0, help='skip first n combinations')
 
 if __name__ == "__main__":
     try:
         args = parser.parse_args()
         team_member = args.team_member
-        skip = args.s
+        skip = args.skip
 
         print("Reading configs...", end = " ")
         c = cfg()
@@ -40,23 +40,25 @@ if __name__ == "__main__":
 
         channels = [16, 32, 64]
         n_edge_conv = [2,3,5]
-        batch_sizes = [16,32]
+        batch_sizes = [16, 32]
         #k = [5,10,30]
         
        
         count = 0
-        for c in channels:
+        for ch in channels:
             for n in n_edge_conv:
                 for b in batch_sizes:
                     count+=1
                     if count <= skip:
                         continue
-                    cfg_json["model"]["graph_conv_layer_sizes"] = [c] * n
+                    print(f"\nTraining n° {count}")
+                    cfg_json["model"]["graph_conv_layer_sizes"] = [ch] * n
                     cfg_json["model"]["aggregation"]["args"]["k"] = k
                     cfg_json["training"]["batch_size"] = b
-                    train_folder = f"k_{str(k)}_c_{str(c)}_n_{str(n)}_b_{str(b)}"
-                    c = cfg(cfg_json)
+                    train_folder = f"k_{str(k)}_c_{str(ch)}_n_{str(n)}_b_{str(b)}"
                     outpath = os.path.join(results_path, train_folder)
+                    cfg_json["results_path"] = outpath
+                    c = cfg(cfg_json)
                     t = MPGNNHandler(activities_index, c)
                     t.train(train_dataset, validation_dataset)
     

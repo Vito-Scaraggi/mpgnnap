@@ -1,6 +1,6 @@
 {   
     "seed" : 42,
-    "dataset_path" : "dataset/tensors_files",
+    "dataset_path" : "_data/tensors_files",
     "results_path" : "results/exp",
     "model" : {
         "num_node_features" : 3,
@@ -16,8 +16,8 @@
         "use_cuda_if_available" : true
     },
     "training" : {
-        "batch_size" : 16,
-        "epochs" : 50,
+        "batch_size" : 256,
+        "epochs" : 1,
         "learning_rate" : 0.001,
         "early_stop" : {
             "patience" : 10,

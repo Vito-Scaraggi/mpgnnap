@@ -1,9 +1,14 @@
-'''read file data/meta.pth than plot'''
 import torch
+import os
+import argparse
 
-def read_train_results():
-    file = "data/results_train.pth"
+parser = argparse.ArgumentParser(prog='read & plot')
+parser.add_argument("-p","--path", type=str, default="results/exp", help='path to results folder')
+
+def read_train_results(path):
+    file = os.path.join(path, "results_train.pth")
     obj =  torch.load(file, map_location=torch.device('cpu'))
+    
     train_losses = obj['train_losses']
     validation_losses = obj['validation_losses']
     
@@ -19,8 +24,8 @@ def read_train_results():
     print(f"Best epoch: {max_index+1}") 
     print(f"Best val metrics => Accuracy: {acc[max_index]*100:.3f}%, Precision: {prec[max_index]*100:.3f}%, Recall: {rec[max_index]*100:.3f}%, F1score: {f1[max_index]*100:.3f}%")
 
-def read_test_results():
-    file = "data/results_test.pth"
+def read_test_results(path):
+    file = os.path.join(path, "results_test.pth")
     obj = torch.load(file, map_location=torch.device('cpu'))
     test_results = obj['test_metrics']
     acc = test_results['accuracy']
@@ -34,5 +39,7 @@ def read_test_results():
     print(f"Support per class:\n{supp}")
     
 if __name__ == "__main__":
-    read_train_results()
-    read_test_results()
+    args = parser.parse_args()
+    results_path = args.path
+    read_train_results(results_path)
+    read_test_results(results_path)

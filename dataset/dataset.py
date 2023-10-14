@@ -6,7 +6,7 @@ from torch_geometric.data import Data, Dataset
 
 class CreateDataset:
     def __init__(self, dataset_path):
-        self.dataset_path = dataset_path
+        self.dataset_path = dataset_path + "/"
         torch.set_printoptions(precision=15)
     
     def create_tensors(self, phase: int):
@@ -164,7 +164,8 @@ class CreateDataset:
                     edges_tensor.extend(torch.tensor(subgraph_e))
 
             if not os.path.exists(self.dataset_path + path[:len(path)-3]):    
-                os.mkdir(self.dataset_path + path[:len(path)-3])
+                os.makedirs(self.dataset_path + path[:len(path)-3])
+
             torch.save(nodes_tensor, self.dataset_path + path[:len(path)-3] + '/n_' + path)
             torch.save(edges_tensor, self.dataset_path + path[:len(path)-3] + '/e_' + path)
             torch.save(ground_truth_tensor, self.dataset_path + path[:len(path)-3] + '/gt_' + path)

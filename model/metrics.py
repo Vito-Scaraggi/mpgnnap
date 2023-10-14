@@ -35,8 +35,8 @@ class Metrics():
 
     # main metric is F1score
     def get_main_metric(self):
-        # return self.accuracy.compute()
-        return self.metrics["f1score"].compute()
+        return self.metrics["accuracy"].compute()
+        #return self.metrics["f1score"].compute()
 
     def print_metrics(self):
         for key, val in self.metrics.items():

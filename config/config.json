@@ -1,7 +1,7 @@
 {   
     "seed" : 42,
-    "dataset_path" : "/kaggle/working/tensors_files",
-    "results_path" : "/kaggle/working/results/exp",
+    "dataset_path" : "_data/tensors_files",
+    "results_path" : "results/exp",
     "model" : {
         "num_node_features" : 3,
         "graph_conv_layer_sizes" : [32, 32, 32, 32, 32],

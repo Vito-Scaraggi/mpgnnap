@@ -162,9 +162,6 @@ class CreateDataset:
                     #subgraph_feature_tensor = torch.from_numpy(numpy_subgraph_feature)
                     #nodes_tensor.append(subgraph_feature_tensor)
                     edges_tensor.extend(torch.tensor(subgraph_e))
-
-            if not os.path.exists(self.dataset_path):    
-                os.makedirs(self.dataset_path)
                 
             if not os.path.exists(self.dataset_path + path[:len(path)-3]):    
                 os.makedirs(self.dataset_path + path[:len(path)-3])

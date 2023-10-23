@@ -2,7 +2,7 @@ import json
 import torch
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear, ReLU, Module
-from torch_geometric.nn import MessagePassing
+from torch_geometric.nn import MessagePassing, BatchNorm
 from torch_geometric.utils import sort_edge_index
 from typing import List
 
@@ -65,23 +65,32 @@ class SimpleMPGNN(Module):
 
         # Graph Convolutions
         self.conv1 = EdgeConv(self.num_features, self.graph_conv_layer_sizes[0]).to(self.device)
-        
+        self.batchnorm1 = BatchNorm(self.graph_conv_layer_sizes[0]).to(self.device)
+
         self.convs = torch.nn.ModuleList()
+        self.batchnorms = torch.nn.ModuleList()
+        
         for in_size, out_size in zip(self.graph_conv_layer_sizes, self.graph_conv_layer_sizes[1:]):
             self.convs.append(EdgeConv(in_size, out_size).to(self.device))
-        
+            self.batchnorms.append(BatchNorm(out_size).to(self.device))
+
         aggr_factory = AggrFactory()
         self.aggr_layer  = aggr_factory.factory(self.aggr_type, **self.aggr_args)
 
-        # Dense Layers
-        # Input size from the source code
-        #TODO: If len(dense_layer_sizes) == 0 this would fail
-        self.linear = torch.nn.Linear( aggr_factory.dl_in_channels_factor(self.aggr_type, **self.aggr_args) * self.graph_conv_layer_sizes[-1], 
-                                      self.dense_layer_sizes[0]).to(self.device)
+        # In forward, there is some tensor magic between these two "layers"
+        self.aggr_factor = aggr_factory.dl_in_channels_factor(self.aggr_type, **self.aggr_args)
+        
+        first_linear_size =  self.aggr_factor * self.graph_conv_layer_sizes[-1]
+        self.linear = torch.nn.Linear( first_linear_size, self.dense_layer_sizes[0]).to(self.device)
+        
+
         self.linears = torch.nn.ModuleList()
+        
         for in_size, out_size in zip(self.dense_layer_sizes, self.dense_layer_sizes[1:]):
             self.linears.append(Linear(in_size, out_size).to(self.device))
+
         self.linear_output = Linear(self.dense_layer_sizes[-1], self.num_output_features).to(self.device) # Final layer for output
+
         print(self)
 
     def reset_parameters(self):
@@ -92,37 +101,52 @@ class SimpleMPGNN(Module):
         if hasattr(self.aggr_layer, "reset_parameters"):
             self.aggr_layer.reset_parameters()
         
+        self.batchnorm1.reset_parameters()
+        for batchnorm in self.batchnorms:
+            batchnorm.reset_parameters()
+
         self.linear.reset_parameters()
         for linear in self.linears:
             linear.reset_parameters()
+
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
         x = x.to(self.device)
         edge_index = edge_index.to(self.device)
         batch = batch.to(self.device)
-        #edge_index = sort_edge_index(edge_index, sort_by_row = False)
-        # Graph Convolution
-        x = F.relu(self.conv1(x, edge_index))
-        for conv in self.convs:
-            x = F.relu(conv(x, edge_index))
         
+        # Graph Convolutions
+        x = self.conv1(x, edge_index)
+        x = self.batchnorm1(x)
+        x = F.relu(x)
+
+        for conv, batchn in zip(self.convs, self.batchnorms):
+            x = conv(x, edge_index)
+            x = batchn(x)
+            x = F.relu(x)
+        
+        # Aggregation
         x = self.aggr_layer(x, batch)
+
         # Reshape the tensor to be able to pass it to the dense layers (flatten ?)
-        #x = torch.flatten(x)
-        #x = x.view(len(x), -1)
-        
+        x = x.view(len(x), -1)
+
         # Dropout
-        x = F.dropout(x, p=self.dropout_rate, training=self.training)
+        #x = F.dropout(x, p=self.dropout_rate, training=self.training)
 
         # Dense Layers
-        x = F.relu(self.linear(x))
+        x = self.linear(x)
+        x = F.relu(x)
+        
         for linear in self.linears:  
-            x = F.relu(linear(x))
-        x = F.relu(self.linear_output(x))
-        x = torch.softmax(x, dim=0) # Softmax to get probabilities
+            x = linear(x)
+            x = F.relu(x)
+
+        x = self.linear_output(x)
+        x = F.relu(x)
         return x # No activation function, as pytorch already applies softmax in cross-entropy loss
-    
+
     def __repr__(self):
         params = {
             "Graph Conv. Layer Sizes": self.graph_conv_layer_sizes,

@@ -37,25 +37,29 @@ if __name__ == "__main__":
             k = 30
         else:
             raise ValueError("Parametri accettati sono uno tra chris/vito/luca")
-
-        channels = [16, 32, 64]
-        n_edge_conv = [2,3,5]
-        batch_sizes = [16, 32]
-        #k = [5,10,30]
         
+        #k = [5,10,30]
+        ch = 32
+        n_edge_conv = [2,3,5,7]
+        batch_sizes = [16, 32]
+        lrs = [0.01, 0.001]
+        
+
+        cfg_json["training"]["learning_rate"] = 0.001
        
         count = 0
-        for ch in channels:
-            for n in n_edge_conv:
-                for b in batch_sizes:
+        for n in n_edge_conv:
+            for b in batch_sizes:
+                for lr in lrs:
                     count+=1
                     if count <= skip:
                         continue
                     print(f"\nTraining n° {count}")
                     cfg_json["model"]["graph_conv_layer_sizes"] = [ch] * n
                     cfg_json["model"]["aggregation"]["args"]["k"] = k
+                    cfg_json["training"]["learning_rate"] = lr
                     cfg_json["training"]["batch_size"] = b
-                    train_folder = f"k_{str(k)}_c_{str(ch)}_n_{str(n)}_b_{str(b)}"
+                    train_folder = f"lr{str(lr)}_b_{str(b)}_n_{str(n)}_k_{str(k)}"
                     outpath = os.path.join(results_path, train_folder)
                     cfg_json["results_path"] = outpath
                     c = cfg(cfg_json)

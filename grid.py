@@ -42,7 +42,7 @@ if __name__ == "__main__":
         ch = 32
         n_edge_conv = [2,3,5,7]
         batch_sizes = [16, 32]
-        lrs = [0.01, 0.001]
+        lrs = [0.001, 0.0001]
         
 
         cfg_json["training"]["learning_rate"] = 0.001

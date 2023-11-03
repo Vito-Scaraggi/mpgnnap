@@ -4,6 +4,19 @@ from jsonschema.exceptions import SchemaError
 from types import SimpleNamespace
 
 class cfg():
+    """
+    A class for loading and validating configuration files.
+
+    Attributes:
+    - schema: A JSON schema used to validate the configuration file.
+    - config: A SimpleNamespace object containing the configuration data.
+    - config_json: The original configuration data in JSON format.
+
+    Methods:
+    - __init__(json_data=None): Initializes the cfg object by loading and validating the configuration file.
+    - get_config(): Returns the configuration data as a SimpleNamespace object.
+    - get_config_json(): Returns the configuration data in JSON format.
+    """
     def __init__(self, json_data = None):
         try:
             with open("config/config_schema.json") as f:

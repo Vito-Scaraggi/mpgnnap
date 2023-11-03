@@ -9,7 +9,15 @@ from model.utils import EarlyStopper
 
 class MPGNNHandler():
 
-    def __init__(self, activities_index, cfg, load_weights = False):
+    def __init__(self, activities_index, cfg, load_weights=False):
+        """
+        Initializes an instance of the MPGNNHandler class.
+
+        Args:
+            activities_index (list): A list containing activity names.
+            cfg (Config): An instance of the Config class containing the configuration parameters for the model.
+            load_weights (bool, optional): A flag indicating whether to load the weights of a previously trained model. Defaults to False.
+        """
         try:
             self.cfg = cfg.get_config()
             self.outpath = self.cfg.results_path
@@ -20,7 +28,7 @@ class MPGNNHandler():
             self.save_results_path = os.path.join(self.outpath , f"results_{'test' if load_weights else 'train'}.pth")
 
             if not os.path.exists(self.outpath):
-                 os.makedirs(self.outpath)
+                os.makedirs(self.outpath)
             
             if load_weights:
                 self.meta = torch.load(self.save_meta_path)
@@ -31,10 +39,16 @@ class MPGNNHandler():
                 self.meta =  cfg.get_config_json()
                     
         except FileNotFoundError:
-            raise FileNotFoundError("No weights found")        
-
-    # def train(self, train_data, validation_data):
+            raise FileNotFoundError("No weights found")
+    
     def train(self, train_dataset, validation_dataset):
+        """
+        Trains the model on the given training dataset and validates it on the given validation dataset.
+
+        Args:
+            train_dataset (torch_geometric.data.Dataset): The training dataset.
+            validation_dataset (torch_geometric.data.Dataset): The validation dataset.
+        """
             
         train_cfg = self.cfg.training
         torch.manual_seed(self.cfg.seed)
@@ -141,7 +155,16 @@ class MPGNNHandler():
         # save results to file 
         torch.save(self.results, self.save_results_path)
 
-    def evaluate(self, data) -> float:
+    def evaluate(self, data):
+        """
+        Evaluates the model on the given data and saves the results to a file.
+
+        Args:
+            data (torch_geometric.data.DataLoader): The data to evaluate the model on.
+
+        Returns:
+            None
+        """
         
         self.test_metrics = Metrics(self.model.num_output_features, self.model.device)
         self.model.eval()

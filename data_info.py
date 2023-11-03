@@ -5,6 +5,16 @@ import matplotlib.pyplot as plt
 from config.config import cfg
 
 def get_supports(m):
+    """
+    Returns the number of samples and the percentage of support for each activity in the ground truth data of a given dataset.
+
+    Args:
+    - m (str): the name of the dataset
+
+    Returns:
+    - supports (dict): a dictionary containing the number of samples for each activity in the ground truth data
+    - supports_perc (dict): a dictionary containing the percentage of support for each activity in the ground truth data
+    """
     c = cfg()
     cfg_ = c.get_config()
     
@@ -22,12 +32,19 @@ def get_supports(m):
     
     supports_perc = { i : round(supports[i]/len(data_gt),4) for i in range(num_activities) }
     print(f"{len(data_gt)} samples.\n")
-    #print(f"Supports per class:\n{supports}\n")
-    #print(f"Supports % per class\n{supports_perc}\n")
 
     return supports, supports_perc
 
 def ig_stats(m):
+    """
+    Computes statistics about the instance graphs in the specified dataset split.
+
+    Args:
+        m (str): The dataset split to compute statistics for. Must be one of "train", "valid", or "test".
+
+    Returns:
+        None
+    """
     file = m + ".g"
     if m == "train":
         file = "training.g"

@@ -4,23 +4,23 @@
     "results_path" : "results/exp",
     "model" : {
         "num_node_features" : 3,
-        "graph_conv_layer_sizes" : [32, 32, 32, 32, 32],
+        "graph_conv_layer_sizes" : [32, 32, 32],
         "dense_layer_sizes" : [32],
         "dropout_rate" : 0.1,
         "aggregation" : {
             "mode" : "sort",
             "args" : {
-                "k" : 5
+                "k" : 30
             }
         },
         "use_cuda_if_available" : true
     },
     "training" : {
         "batch_size" : 16,
-        "epochs" : 50,
+        "epochs" : 500,
         "learning_rate" : 0.001,
         "early_stop" : {
-            "patience" : 10,
+            "patience" : 20,
             "min_delta" : 0.0001
         }
     },

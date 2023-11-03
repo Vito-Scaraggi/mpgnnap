@@ -2,7 +2,7 @@
 ### Message Passing Neural Network for Next Activity Prediction
 
 ## 📍 Overview
-MPNNNAP is a an implementation of a *spatial-based* ConvGNN  using *Message Passing framework* to face the *Next Activity Prediction task* on BPI12 dataset.
+MPNNNAP is a an implementation of a *spatial-based* ConvGNN  using *Message Passing framework* to face the *Next Activity Prediction task* on BPI12w dataset.
 
 This work adopts the pipeline presented in the paper ["Exploiting Instance Graphs and Graph Neural Networks for Next Activity Prediction"](https://link.springer.com/chapter/10.1007/978-3-030-98581-3_9) by Chiorrini et. al. and feed an MPNN with subgraphs obtained from instance graphs preprocessing.
 
